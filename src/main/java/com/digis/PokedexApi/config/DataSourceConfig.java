@@ -4,6 +4,7 @@ import javax.sql.DataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.web.client.RestTemplate;
 
 @Configuration
 public class DataSourceConfig {
@@ -16,6 +17,10 @@ public class DataSourceConfig {
         dataSource.setPassword("password1");
         return dataSource;
         
+    }
+     @Bean
+    public RestTemplate pokemonRestTempllate(){
+        return new RestTemplate();
     }
     
     
