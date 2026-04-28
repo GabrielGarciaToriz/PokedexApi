@@ -1,20 +1,13 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package com.digis.PokedexApi.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Getter;
-import lombok.Setter;
-
-@Getter
-@Setter
+/**
+ *
+ * @author ALIEN59
+ */
 public class PokemonDTO {
-
-    private int idPokemon;
-    private String name;
-    private String weight;
-    private String height;
-    @JsonProperty("base_experience")
-    private String baseExperience;
-    @JsonProperty("is_default")
-    private boolean isDefault;
-
+    
 }
