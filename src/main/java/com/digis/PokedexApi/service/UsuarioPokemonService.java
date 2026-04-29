@@ -22,8 +22,8 @@ public class UsuarioPokemonService {
     public Result getAllByid(int idUsuarioPokemon) {
         return envolverRespuesta(() -> pokemonRepository.getAllByIdWithDetails(idUsuarioPokemon));
     }
-    
-    public Result getAllByUsername(String username){
+
+    public Result getAllByUsername(String username) {
         return envolverRespuesta(() -> pokemonRepository.getAllByUserNameWithDetails(username));
     }
 
@@ -32,6 +32,18 @@ public class UsuarioPokemonService {
         Result result = new Result();
         try {
             pokemonRepository.save(usuario);
+            result.correct = true;
+        } catch (Exception e) {
+            manejoErrores(result, e);
+        }
+        return result;
+    }
+
+    @Transactional
+    public Result eliminarUsuario(int idUsuario) {
+        Result result = new Result();
+        try {
+            pokemonRepository.deleteById(idUsuario);
             result.correct = true;
         } catch (Exception e) {
             manejoErrores(result, e);

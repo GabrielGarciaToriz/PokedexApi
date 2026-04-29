@@ -1,10 +1,12 @@
 package com.digis.PokedexApi.service;
 
 import com.digis.PokedexApi.dto.PokemonApiResponseDTO;
+import com.digis.PokedexApi.dto.PokemonDTO;
 import com.digis.PokedexApi.dto.Result;
 import com.digis.PokedexApi.dto.pokemon.PokeListResponseDTO;
 import com.digis.PokedexApi.dto.pokemon.StatDTO;
 import com.digis.PokedexApi.entity.Pokemon;
+import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import com.digis.PokedexApi.repository.PokemonApiRepository;
 
 @Service
 public class PokeApiService {
@@ -25,13 +28,15 @@ public class PokeApiService {
 
     @Autowired
     private RestTemplate pokemonRestTemplate;
+    @Autowired
+    private PokemonApiRepository pokemonRepository;
 
     @Cacheable(value = "pokemon-name", key = "#name")
     public Result getAllByName(String name) {
         Result result = new Result();
 
         try {
-            Pokemon pokemon = fetchDetalle(URL_ID + name);
+            PokemonDTO pokemon = fetchDetalle(URL_ID + name);
             if (pokemon == null) {
                 result.correct = false;
                 result.errorMessage = "No se encontro al pokemon con el nombre de " + name;
@@ -51,7 +56,7 @@ public class PokeApiService {
     public Result getAllById(int id) {
         Result result = new Result();
         try {
-            Pokemon pokemon = fetchDetalle(URL_ID + id);
+            PokemonDTO pokemon = fetchDetalle(URL_ID + id);
             if (pokemon == null) {
                 result.correct = false;
                 result.errorMessage = "No se encontro el pokemon";
@@ -74,13 +79,13 @@ public class PokeApiService {
         try {
             PokeListResponseDTO pokemons = pokemonRestTemplate.getForObject(URL_BASE, PokeListResponseDTO.class);
             int total = pokemons.getCount();
-            List<CompletableFuture<List<Pokemon>>> bloques = new ArrayList<>();
+            List<CompletableFuture<List<PokemonDTO>>> bloques = new ArrayList<>();
             for (int offset = 0; offset < total; offset += 100) {
                 final int off = offset;
                 bloques.add(CompletableFuture.supplyAsync(() -> fetchBloque(100, off)));
             }
 
-            List<Pokemon> todos = bloques.stream()
+            List<PokemonDTO> todos = bloques.stream()
                     .map(CompletableFuture::join)
                     .flatMap(List::stream)
                     .filter(Objects::nonNull)
@@ -96,14 +101,6 @@ public class PokeApiService {
         return result;
     }
 
-    private List<Pokemon> fetchBloque(int limit, int offset) {
-        PokeListResponseDTO lista_pokemon = pokemonRestTemplate.getForObject(LIST_URL, PokeListResponseDTO.class, limit, offset);
-        if (lista_pokemon == null) {
-            return List.of();
-        }
-        return lista_pokemon.getResults().stream().map(item -> fetchDetalle(item.getUrl())).filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
     @Cacheable(value = "pokemon-paginado", key = "#limit + '-' + #offset")
     public Result getPaginado(int limit, int offset) {
         Result result = new Result();
@@ -113,10 +110,10 @@ public class PokeApiService {
                 result.correct = false;
                 result.errorMessage = "No se obtuvieron resultados";
             }
-            List<CompletableFuture<Pokemon>> futures = respuesta.getResults().stream()
+            List<CompletableFuture<PokemonDTO>> futures = respuesta.getResults().stream()
                     .map(item -> CompletableFuture.supplyAsync(()
                     -> fetchDetalle(item.getUrl()))).collect(Collectors.toList());
-            List<Pokemon> pokemons = futures.stream()
+            List<PokemonDTO> pokemons = futures.stream()
                     .map(CompletableFuture::join)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
@@ -130,7 +127,7 @@ public class PokeApiService {
         return result;
     }
 
-    private Pokemon fetchDetalle(String url) {
+    private PokemonDTO fetchDetalle(String url) {
         try {
             PokemonApiResponseDTO respuesta = pokemonRestTemplate.getForObject(url, PokemonApiResponseDTO.class);
             return mapearPokemon(respuesta);
@@ -139,11 +136,19 @@ public class PokeApiService {
         }
     }
 
-    private Pokemon mapearPokemon(PokemonApiResponseDTO pokemonRespuesta) {
+    private List<PokemonDTO> fetchBloque(int limit, int offset) {
+        PokeListResponseDTO lista_pokemon = pokemonRestTemplate.getForObject(LIST_URL, PokeListResponseDTO.class, limit, offset);
+        if (lista_pokemon == null) {
+            return List.of();
+        }
+        return lista_pokemon.getResults().stream().map(item -> fetchDetalle(item.getUrl())).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+    private PokemonDTO mapearPokemon(PokemonApiResponseDTO pokemonRespuesta) {
         if (pokemonRespuesta == null) {
             return null;
         }
-        Pokemon pokemon = new Pokemon();
+        PokemonDTO pokemon = new PokemonDTO();
         pokemon.setIdPokemon(pokemonRespuesta.getIdPokemon());
         pokemon.setName(pokemonRespuesta.getName());
         pokemon.setWeight(String.valueOf(pokemonRespuesta.getWeight()));
@@ -160,4 +165,14 @@ public class PokeApiService {
         return pokemon;
     }
 
+    @Transactional
+    public Result addPokemonFavorito(Pokemon pokemon, int IdUsuario) {
+        Result result = new Result();
+        try {
+            pokemonRepository.save(pokemon);
+        } catch (Exception e) {
+        }
+        return result;
+
+    }
 }
