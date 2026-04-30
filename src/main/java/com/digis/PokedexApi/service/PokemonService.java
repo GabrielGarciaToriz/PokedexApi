@@ -7,13 +7,12 @@ import com.digis.PokedexApi.entity.UsuarioPokemonFavorito;
 import com.digis.PokedexApi.repository.PokemonRepository;
 import com.digis.PokedexApi.repository.UsuarioPokemonFavoritoRepository;
 import jakarta.transaction.Transactional;
-import java.util.ArrayList;
 import java.util.Date;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class PokemonService {
+public class PokemonService extends BaseService {
 
     @Autowired
     private UsuarioPokemonFavoritoRepository pokemonFavoritoRepository;
@@ -21,34 +20,19 @@ public class PokemonService {
     private PokemonRepository pokemonRepository;
 
     public Result getFavoritoById(int idUsuario) {
-        Result result = new Result();
-        try {
-            result.objects = new ArrayList<>(pokemonFavoritoRepository.getFavoritosByUsuario(idUsuario));
-            result.correct = true;
-        } catch (Exception e) {
-            result.correct = false;
-            result.errorMessage = e.getLocalizedMessage();
-            result.ex = e;
-        }
-        return result;
+        return ejecutarLista(() -> pokemonFavoritoRepository.getFavoritosByUsuario(idUsuario));
     }
 
     public Result isFav(int idUsuario, int idPokemon) {
-        Result result = new Result();
-        try {
-            boolean existe = pokemonFavoritoRepository.existsByUsuarioPokemon_IdUsuarioPokemonAndPokemon_IdPokemon(idUsuario, idPokemon);
-            if (existe) {
-                result.object = existe;
-                result.correct = true;
-            }
-            result.correct = false;
-        } catch (Exception e) {
-            result.correct = false;
-            result.errorMessage = e.getLocalizedMessage();
-            result.ex = e;
-        }
-        return result;
+        return ejecutar(() -> pokemonFavoritoRepository.existsByUsuarioPokemon_IdUsuarioPokemonAndPokemon_IdPokemon(idUsuario, idPokemon));
     }
+
+    public Result buscarPokemon(String nombre, String tipo) {
+        return ejecutarLista(
+                () -> pokemonRepository.buscarPorFiltros(nombre, tipo)
+        );
+    }
+    
 
     @Transactional
     public Result agregarFavorito(int idUsuario, Pokemon pokemon) {

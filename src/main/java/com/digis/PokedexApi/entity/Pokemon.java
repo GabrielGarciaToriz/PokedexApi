@@ -3,7 +3,6 @@ package com.digis.PokedexApi.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -34,5 +33,5 @@ public class Pokemon {
     @Column(name = "experiencia_base")
     private String base_expirence;
     @Column(name = "sprite_front")
-    private boolean sprite_front;
+    private String sprite_front;
 }

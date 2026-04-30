@@ -6,6 +6,7 @@ import com.digis.PokedexApi.dto.Result;
 import com.digis.PokedexApi.dto.pokemon.PokeListResponseDTO;
 import com.digis.PokedexApi.dto.pokemon.StatDTO;
 import com.digis.PokedexApi.entity.Pokemon;
+import com.digis.PokedexApi.mapper.PokemonMapper;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +21,7 @@ import org.springframework.web.client.RestTemplate;
 import com.digis.PokedexApi.repository.PokemonApiRepository;
 
 @Service
-public class PokeApiService {
+public class PokeApiService extends BaseService {
 
     private static final String URL_ID = "https://pokeapi.co/api/v2/pokemon/";
     private static final String LIST_URL = "https://pokeapi.co/api/v2/pokemon?limit={limit}&offset={offset}";
@@ -30,6 +31,8 @@ public class PokeApiService {
     private RestTemplate pokemonRestTemplate;
     @Autowired
     private PokemonApiRepository pokemonRepository;
+    @Autowired
+    private PokemonMapper mapper;
 
     @Cacheable(value = "pokemon-name", key = "#name")
     public Result getAllByName(String name) {
@@ -103,34 +106,24 @@ public class PokeApiService {
 
     @Cacheable(value = "pokemon-paginado", key = "#limit + '-' + #offset")
     public Result getPaginado(int limit, int offset) {
-        Result result = new Result();
-        try {
+        return ejecutarLista(() -> {
             PokeListResponseDTO respuesta = pokemonRestTemplate.getForObject(LIST_URL, PokeListResponseDTO.class, limit, offset);
             if (respuesta == null || respuesta.getResults().isEmpty()) {
-                result.correct = false;
-                result.errorMessage = "No se obtuvieron resultados";
+                throw new RuntimeException("No se obtuvieron resultados");
             }
-            List<CompletableFuture<PokemonDTO>> futures = respuesta.getResults().stream()
-                    .map(item -> CompletableFuture.supplyAsync(()
-                    -> fetchDetalle(item.getUrl()))).collect(Collectors.toList());
-            List<PokemonDTO> pokemons = futures.stream()
+            return respuesta.getResults().stream().map(
+                    item -> CompletableFuture.supplyAsync(() -> fetchDetalle(item.getUrl()))
+            ).collect(Collectors.toList()).stream()
                     .map(CompletableFuture::join)
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
-            result.objects = pokemons;
-            result.correct = true;
-        } catch (Exception e) {
-            result.correct = false;
-            result.errorMessage = e.getMessage();
-            result.ex = e;
-        }
-        return result;
+        });
+
     }
 
     private PokemonDTO fetchDetalle(String url) {
         try {
-            PokemonApiResponseDTO respuesta = pokemonRestTemplate.getForObject(url, PokemonApiResponseDTO.class);
-            return mapearPokemon(respuesta);
+            return mapper.toEntity(pokemonRestTemplate.getForObject(url, PokemonApiResponseDTO.class));
         } catch (Exception e) {
             return null;
         }
@@ -144,26 +137,7 @@ public class PokeApiService {
         return lista_pokemon.getResults().stream().map(item -> fetchDetalle(item.getUrl())).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-    private PokemonDTO mapearPokemon(PokemonApiResponseDTO pokemonRespuesta) {
-        if (pokemonRespuesta == null) {
-            return null;
-        }
-        PokemonDTO pokemon = new PokemonDTO();
-        pokemon.setIdPokemon(pokemonRespuesta.getIdPokemon());
-        pokemon.setName(pokemonRespuesta.getName());
-        pokemon.setWeight(String.valueOf(pokemonRespuesta.getWeight()));
-        pokemon.setHeight(String.valueOf(pokemonRespuesta.getHeight()));
-        pokemon.setBase_expirence(String.valueOf(pokemonRespuesta.getBaseExperience()));
-        pokemon.set_default(pokemonRespuesta.isDefault());
-        List<String> types = pokemonRespuesta.getTypes().stream().map(t -> t.getType().getName()).collect(Collectors.toList());
-        pokemon.setTypes(types);
-        List<String> moves = pokemonRespuesta.getMoves().stream().map(m -> m.getMove().getName()).collect(Collectors.toList());
-        pokemon.setMoves(moves);
-        Map<String, Integer> stats = pokemonRespuesta.getStats().stream().collect(Collectors.toMap(s -> s.getStat().getName(), StatDTO::getBaseStat));
-        pokemon.setStats(stats);
-        pokemon.setSprites(pokemonRespuesta.getSprites());
-        return pokemon;
-    }
+
 
     @Transactional
     public Result addPokemonFavorito(Pokemon pokemon, int IdUsuario) {

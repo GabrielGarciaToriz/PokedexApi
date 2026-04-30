@@ -38,13 +38,14 @@ public class UsuarioPokemonRestController {
         Result result = usuarioPokemonService.getAllByUsername(username);
         return new ResponseEntity<>(result, result.correct ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
     }
+    
 
-    @PostMapping()
-    public ResponseEntity<Result> agregarUsaurio(@RequestBody UsuarioPokemon usuario) {
+    @PostMapping("/agregar")
+    public ResponseEntity<Result> agregarUsuario(@RequestBody UsuarioPokemon usuario) {
         Result result = usuarioPokemonService.agregarUsuario(usuario);
         return new ResponseEntity<>(result, result.correct ? HttpStatus.CREATED : HttpStatus.BAD_REQUEST);
     }
-    
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Result> eliminarUsuario(@PathVariable("id") int idUsuarioPokemon) {
         Result result = usuarioPokemonService.eliminarUsuario(idUsuarioPokemon);
