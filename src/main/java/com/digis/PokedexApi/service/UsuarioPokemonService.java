@@ -10,28 +10,44 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
-public class UsuarioPokemonService {
+public class UsuarioPokemonService extends BaseService {
 
     @Autowired
-    private UsuarioPokemonRepository pokemonRepository;
+    private UsuarioPokemonRepository usuarioRepository;
 
     public Result getAll() {
-        return envolverRespuesta(() -> pokemonRepository.getAllWithDetails());
+        return envolverRespuesta(() -> usuarioRepository.getAllWithDetails());
     }
 
     public Result getAllByid(int idUsuarioPokemon) {
-        return envolverRespuesta(() -> pokemonRepository.getAllByIdWithDetails(idUsuarioPokemon));
+        return envolverRespuesta(() -> usuarioRepository.getAllByIdWithDetails(idUsuarioPokemon));
     }
-    
-    public Result getAllByUsername(String username){
-        return envolverRespuesta(() -> pokemonRepository.getAllByUserNameWithDetails(username));
+
+    public Result getAllByUsername(String username) {
+        return envolverRespuesta(() -> usuarioRepository.getAllByUserNameWithDetails(username));
+    }
+
+    public Result buscarUsuario(String nombre, String apellidoPaterno, String apellidoMaterno) {
+        return ejecutarLista(() -> usuarioRepository.buscarPorFiltros(nombre, apellidoPaterno, apellidoMaterno));
     }
 
     @Transactional
     public Result agregarUsuario(UsuarioPokemon usuario) {
         Result result = new Result();
         try {
-            pokemonRepository.save(usuario);
+            usuarioRepository.save(usuario);
+            result.correct = true;
+        } catch (Exception e) {
+            manejoErrores(result, e);
+        }
+        return result;
+    }
+
+    @Transactional
+    public Result eliminarUsuario(int idUsuario) {
+        Result result = new Result();
+        try {
+            usuarioRepository.deleteById(idUsuario);
             result.correct = true;
         } catch (Exception e) {
             manejoErrores(result, e);

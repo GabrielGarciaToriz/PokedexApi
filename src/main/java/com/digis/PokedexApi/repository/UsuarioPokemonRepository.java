@@ -25,14 +25,32 @@ public interface UsuarioPokemonRepository extends JpaRepository<UsuarioPokemon, 
            """
     )
     List<UsuarioPokemon> getAllByIdWithDetails(@Param("idUsuarioPokemon") int idUsuarioPokemon);
-    
+
     @Query(
-    """
+            """
     SELECT DISTINCT u FROM UsuarioPokemon u
     LEFT JOIN FETCH u.rol
     WHERE u.userName = :userName
     ORDER BY u.idUsuarioPokemon ASC
     """
     )
-    List<UsuarioPokemon> getAllByUserNameWithDetails(@Param("userName")String username);
+    List<UsuarioPokemon> getAllByUserNameWithDetails(@Param("userName") String username);
+
+    @Query(
+            """
+    SELECT DISTINCT u FROM UsuarioPokemon u
+        LEFT JOIN FETCH u.rol
+        WHERE (:nombre IS NULL 
+               OR LOWER(u.nombre) LIKE LOWER(CONCAT('%', :nombre, '%')))
+        AND (:apellidoPaterno IS NULL 
+             OR LOWER(u.apellidoPaterno) LIKE LOWER(CONCAT('%', :apellidoPaterno, '%')))
+        AND (:apellidoMaterno IS NULL 
+             OR LOWER(u.apellidoMaterno) LIKE LOWER(CONCAT('%', :apellidoMaterno, '%')))
+        ORDER BY u.idUsuarioPokemon ASC
+    """)
+    List<UsuarioPokemon> buscarPorFiltros(
+            @Param("nombre") String nombre,
+            @Param("apellidoPaterno") String apellidoPaterno,
+            @Param("apellidoMaterno") String apellidoMaterno
+    );
 }

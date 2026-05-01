@@ -1,6 +1,5 @@
 package com.digis.PokedexApi.config;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
 import javax.sql.DataSource;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
@@ -19,8 +18,9 @@ public class DataSourceConfig {
 
     @Bean
     public DataSource dataSource() {
+        
         DriverManagerDataSource dataSource = new DriverManagerDataSource();
-        dataSource.setUrl("jdbc:oracle:thin:@192.167.0.64:1521:orcl");
+        dataSource.setUrl("jdbc:oracle:thin:@192.167.0.242:1521:orcl");
         dataSource.setUsername("DAraizaPokeApi");
         dataSource.setPassword("password1");
         return dataSource;
