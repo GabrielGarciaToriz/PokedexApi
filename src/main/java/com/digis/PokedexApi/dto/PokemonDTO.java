@@ -18,8 +18,8 @@ public class PokemonDTO {
     private String name;
     private String weight;
     private String height;
-    private String base_expirence;
-    private boolean is_default;
+    private String baseExperience;
+    private boolean isDefault;
 
     private List<String> types;
     private List<String> moves;

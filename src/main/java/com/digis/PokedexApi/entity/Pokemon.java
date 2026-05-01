@@ -27,11 +27,13 @@ public class Pokemon {
     @Column(name = "altura")
     private String height;
     @Column(name = "tipo1")
-    private String tipo_uno;
+    private String tipoUno;
     @Column(name = "tipo2")
-    private String tipo_dos;
+    private String tipoDos;
     @Column(name = "experiencia_base")
-    private String base_expirence;
+    private String baseExpirence;
     @Column(name = "sprite_front")
-    private String sprite_front;
+    private String spriteFront;
+    @Column(name = "isdefault")
+    private boolean isDefault;
 }

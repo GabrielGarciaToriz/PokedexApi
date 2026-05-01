@@ -1,7 +1,7 @@
 package com.digis.PokedexApi.service;
 
 import com.digis.PokedexApi.dto.Result;
-import java.util.ArrayList;
+import com.digis.PokedexApi.exception.ErrorCode;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -9,29 +9,28 @@ public abstract class BaseService {
 
     //CUANDO SOLO VOY A RECIBIR UN SOLO OBJECTO (result.object)
     protected Result ejecutar(Supplier<Object> accion) {
-        Result result = new Result();
         try {
-            result.object = accion.get();
-            result.correct = true;
+            return Result.ok(accion.get());
+        } catch (IllegalArgumentException e) {
+            return Result.error(ErrorCode.INVALID_INPUT, e.getLocalizedMessage(), e);
+        } catch (RuntimeException e) {
+            return Result.error(ErrorCode.NOT_FOUND, e.getLocalizedMessage(), e);
         } catch (Exception e) {
-            result.correct = false;
-            result.errorMessage = e.getLocalizedMessage();
-            result.ex = e;
+            return Result.error(ErrorCode.INTERNAL_ERROR, "Ocurrio un error en el servidor", e);
         }
-        return result;
     }
 
     //CUANDO VOY A RECIBIR UNA LISTA (result.objects)
     protected Result ejecutarLista(Supplier<List<?>> accion) {
-        Result result = new Result();
         try {
-            result.objects = new ArrayList<>(accion.get());
-            result.correct = true;
+            return Result.okList(accion.get());
+        } catch (IllegalArgumentException e) {
+            return Result.error(ErrorCode.INVALID_INPUT, e.getMessage(), e);
+        } catch (RuntimeException e) {
+            return Result.error(ErrorCode.NOT_FOUND, e.getMessage(), e);
         } catch (Exception e) {
-            result.correct = false;
-            result.errorMessage = e.getLocalizedMessage();
-            result.ex = e;
+            return Result.error(ErrorCode.INTERNAL_ERROR,
+                    "Ocurrió un error inesperado", e);
         }
-        return result;
     }
 }

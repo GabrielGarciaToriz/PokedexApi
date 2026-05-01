@@ -1,9 +1,12 @@
 package com.digis.PokedexApi.service;
 
+import com.digis.PokedexApi.dto.PokemonDTO;
 import com.digis.PokedexApi.dto.Result;
 import com.digis.PokedexApi.entity.Pokemon;
 import com.digis.PokedexApi.entity.UsuarioPokemon;
 import com.digis.PokedexApi.entity.UsuarioPokemonFavorito;
+import com.digis.PokedexApi.exception.ErrorCode;
+import com.digis.PokedexApi.mapper.PokemonMapper;
 import com.digis.PokedexApi.repository.PokemonRepository;
 import com.digis.PokedexApi.repository.UsuarioPokemonFavoritoRepository;
 import jakarta.transaction.Transactional;
@@ -18,6 +21,10 @@ public class PokemonService extends BaseService {
     private UsuarioPokemonFavoritoRepository pokemonFavoritoRepository;
     @Autowired
     private PokemonRepository pokemonRepository;
+    @Autowired
+    private PokeApiService pokeApiService;
+    @Autowired
+    private PokemonMapper mapper;
 
     public Result getFavoritoById(int idUsuario) {
         return ejecutarLista(() -> pokemonFavoritoRepository.getFavoritosByUsuario(idUsuario));
@@ -32,54 +39,36 @@ public class PokemonService extends BaseService {
                 () -> pokemonRepository.buscarPorFiltros(nombre, tipo)
         );
     }
-    
 
     @Transactional
-    public Result agregarFavorito(int idUsuario, Pokemon pokemon) {
-        Result result = new Result();
+    public Result agregarFavoritoDesdeCache(int idUsuario, Pokemon pokemon) {
         try {
-            if (pokemonFavoritoRepository.existsByUsuarioPokemon_IdUsuarioPokemonAndPokemon_IdPokemon(idUsuario, pokemon.getIdPokemon())) {
-                result.correct = false;
-                result.errorMessage = "Este pokemon ya esta en tus favoritos";
-                return result;
-            }
-            if (!pokemonRepository.existsById(pokemon.getIdPokemon())) {
-                pokemonRepository.save(pokemon);
+            if (pokemonFavoritoRepository.existsByUsuarioPokemon_IdUsuarioPokemonAndPokemon_IdPokemon(idUsuario, idUsuario)) {
+                Result.error(ErrorCode.DUPLICATE, "Este pokemon ya es tu favorito");
             }
 
-            UsuarioPokemonFavorito favorito = new UsuarioPokemonFavorito();
-            UsuarioPokemon usuario = new UsuarioPokemon();
-            usuario.setIdUsuarioPokemon(idUsuario);
-            favorito.setUsuarioPokemon(usuario);
-            favorito.setPokemon(pokemon);
-            favorito.setFechaAgregado(new Date());
-            pokemonFavoritoRepository.save(favorito);
-            result.correct = true;
+            PokemonDTO pokemonDTO = pokeApiService.getFromCacheById(idUsuario);
+
+            if (pokemonDTO == null) {
+                return Result.error(ErrorCode.NOT_FOUND, "Pokemon no encontrado");
+            }
+            
         } catch (Exception e) {
-            result.correct = false;
-            result.errorMessage = e.getLocalizedMessage();
-            result.ex = e;
         }
-        return result;
+        return null;
     }
 
     @Transactional
     public Result eliminarFavorito(int idUsuario, int idPokemon) {
-        Result result = new Result();
-        try {
-            pokemonFavoritoRepository.getFavoritosByUsuario(idUsuario).stream()
+        return ejecutar(() -> {
+            UsuarioPokemonFavorito favorito = pokemonFavoritoRepository
+                    .getFavoritosByUsuario(idUsuario).stream()
                     .filter(f -> f.getPokemon().getIdPokemon() == idPokemon)
                     .findFirst()
-                    .ifPresentOrElse(pokemonFavoritoRepository::delete,
-                            () -> {
-                                throw new RuntimeException("No encontrado");
-                            }
-                    );
-            result.correct = true;
-        } catch (Exception e) {
-            result.correct = false;
-            result.errorMessage = e.getLocalizedMessage();
-        }
-        return result;
+                    .orElseThrow(() -> new RuntimeException(
+                    "El pokémon no está en tu lista de favoritos"));
+            pokemonFavoritoRepository.delete(favorito);
+            return true;
+        });
     }
 }

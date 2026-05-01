@@ -4,13 +4,9 @@ import com.digis.PokedexApi.dto.PokemonApiResponseDTO;
 import com.digis.PokedexApi.dto.PokemonDTO;
 import com.digis.PokedexApi.dto.Result;
 import com.digis.PokedexApi.dto.pokemon.PokeListResponseDTO;
-import com.digis.PokedexApi.dto.pokemon.StatDTO;
-import com.digis.PokedexApi.entity.Pokemon;
 import com.digis.PokedexApi.mapper.PokemonMapper;
-import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -19,6 +15,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import com.digis.PokedexApi.repository.PokemonApiRepository;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 
 @Service
 public class PokeApiService extends BaseService {
@@ -33,6 +31,8 @@ public class PokeApiService extends BaseService {
     private PokemonApiRepository pokemonRepository;
     @Autowired
     private PokemonMapper mapper;
+    @Autowired
+    private CacheManager cacheManager;
 
     @Cacheable(value = "pokemon-name", key = "#name")
     public Result getAllByName(String name) {
@@ -123,7 +123,7 @@ public class PokeApiService extends BaseService {
 
     private PokemonDTO fetchDetalle(String url) {
         try {
-            return mapper.toEntity(pokemonRestTemplate.getForObject(url, PokemonApiResponseDTO.class));
+            return mapper.apiResponseToDTO(pokemonRestTemplate.getForObject(url, PokemonApiResponseDTO.class));
         } catch (Exception e) {
             return null;
         }
@@ -137,16 +137,18 @@ public class PokeApiService extends BaseService {
         return lista_pokemon.getResults().stream().map(item -> fetchDetalle(item.getUrl())).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
-
-
-    @Transactional
-    public Result addPokemonFavorito(Pokemon pokemon, int IdUsuario) {
-        Result result = new Result();
-        try {
-            pokemonRepository.save(pokemon);
-        } catch (Exception e) {
+    public PokemonDTO getFromCacheById(int id) {
+        Cache cache = cacheManager.getCache("pokemon-id");
+        if (cache != null) {
+            Cache.ValueWrapper cached = cache.get(id);
+            if (cached != null) {
+                Result result = (Result) cached.get();
+                if (result != null && result.object != null) {
+                    return (PokemonDTO) result.object;
+                }
+            }
         }
-        return result;
-
+        Result result = getAllById(id);  // @Cacheable lo guarda solo
+        return result.correct ? (PokemonDTO) result.object : null;
     }
 }

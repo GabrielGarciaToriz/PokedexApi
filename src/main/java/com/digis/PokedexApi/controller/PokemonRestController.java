@@ -32,10 +32,11 @@ public class PokemonRestController extends BaseController {
             @PathVariable int idPokemon) {
         return responder(favoritoService.isFav(idUsuario, idPokemon));
     }
+    
 
     @PostMapping("/{idUsuario}")
     public ResponseEntity<Result> agregarFavorito(@PathVariable("idUsuario") int idUsuario, @RequestBody Pokemon pokemon) {
-        return responder(favoritoService.agregarFavorito(idUsuario, pokemon));
+        return responder(favoritoService.agregarFavoritoDesdeCache(idUsuario, pokemon));
     }
 
     @DeleteMapping("/{idUsuario}/eliminar/{idPokemon}")
