@@ -1,7 +1,6 @@
 package com.digis.PokedexApi.controller;
 
 import com.digis.PokedexApi.dto.Result;
-import com.digis.PokedexApi.entity.Pokemon;
 import com.digis.PokedexApi.service.PokemonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +8,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,11 +30,10 @@ public class PokemonRestController extends BaseController {
             @PathVariable int idPokemon) {
         return responder(favoritoService.isFav(idUsuario, idPokemon));
     }
-    
 
-    @PostMapping("/{idUsuario}")
-    public ResponseEntity<Result> agregarFavorito(@PathVariable("idUsuario") int idUsuario, @RequestBody Pokemon pokemon) {
-        return responder(favoritoService.agregarFavoritoDesdeCache(idUsuario, pokemon));
+    @PostMapping("/{idUsuario}/pokemon/{idPokemon}")
+    public ResponseEntity<Result> agregarFavorito(@PathVariable("idUsuario") int idUsuario, @PathVariable int idPokemon) {
+        return responder(favoritoService.agregarFavoritoDesdeCache(idUsuario, idPokemon));
     }
 
     @DeleteMapping("/{idUsuario}/eliminar/{idPokemon}")

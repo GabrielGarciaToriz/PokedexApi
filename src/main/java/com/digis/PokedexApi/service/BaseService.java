@@ -33,4 +33,13 @@ public abstract class BaseService {
                     "Ocurrió un error inesperado", e);
         }
     }
+
+    protected Result ejecutarVoid(Runnable action) {
+        try {
+            action.run();
+            return Result.ok(true);
+        } catch (Exception e) {
+            return Result.error(ErrorCode.INTERNAL_ERROR, e.getLocalizedMessage());
+        }
+    }
 }

@@ -53,4 +53,6 @@ public interface UsuarioPokemonRepository extends JpaRepository<UsuarioPokemon, 
             @Param("apellidoPaterno") String apellidoPaterno,
             @Param("apellidoMaterno") String apellidoMaterno
     );
+    
+    
 }

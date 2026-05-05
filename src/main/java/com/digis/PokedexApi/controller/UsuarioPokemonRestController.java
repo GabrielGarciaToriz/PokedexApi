@@ -4,7 +4,6 @@ import com.digis.PokedexApi.dto.Result;
 import com.digis.PokedexApi.entity.UsuarioPokemon;
 import com.digis.PokedexApi.service.UsuarioPokemonService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,46 +15,34 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("api/usuario")
-public class UsuarioPokemonRestController {
+public class UsuarioPokemonRestController extends BaseController {
 
     @Autowired
     private UsuarioPokemonService usuarioPokemonService;
 
     @GetMapping()
     public ResponseEntity<Result> getAll() {
-        Result result = usuarioPokemonService.getAll();
-        return new ResponseEntity<>(result, result.correct ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+        return responder(usuarioPokemonService.getAll());
     }
 
     @GetMapping("/{idUsuarioPokemon}")
     public ResponseEntity<Result> getAllById(@PathVariable int idUsuarioPokemon) {
-        Result result = usuarioPokemonService.getAllByid(idUsuarioPokemon);
-        return new ResponseEntity<>(result, result.correct ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+        return responder(usuarioPokemonService.getAllByid(idUsuarioPokemon));
     }
 
     @GetMapping("/username/{username}")
     public ResponseEntity<Result> getAllByUsername(@PathVariable String username) {
-        Result result = usuarioPokemonService.getAllByUsername(username);
-        return new ResponseEntity<>(result, result.correct ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
+        return responder(usuarioPokemonService.getAllByUsername(username));
     }
-    
 
     @PostMapping("/agregar")
     public ResponseEntity<Result> agregarUsuario(@RequestBody UsuarioPokemon usuario) {
-        Result result = usuarioPokemonService.agregarUsuario(usuario);
-        return new ResponseEntity<>(result, result.correct ? HttpStatus.CREATED : HttpStatus.BAD_REQUEST);
+        return responderCreado(usuarioPokemonService.agregarUsuario(usuario));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Result> eliminarUsuario(@PathVariable("id") int idUsuarioPokemon) {
-        Result result = usuarioPokemonService.eliminarUsuario(idUsuarioPokemon);
-        if (result.correct) {
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(result);
-        } else {
-            HttpStatus statusError = result.errorMessage
-                    .contains("no encontrado") ? HttpStatus.NOT_FOUND : HttpStatus.BAD_REQUEST;
-            return ResponseEntity.status(statusError).body(result);
-        }
+        return responderEliminado(usuarioPokemonService.eliminarUsuario(idUsuarioPokemon));
 
     }
 }

@@ -3,14 +3,12 @@ package com.digis.PokedexApi.service;
 import com.digis.PokedexApi.dto.PokemonDTO;
 import com.digis.PokedexApi.dto.Result;
 import com.digis.PokedexApi.entity.Pokemon;
-import com.digis.PokedexApi.entity.UsuarioPokemon;
 import com.digis.PokedexApi.entity.UsuarioPokemonFavorito;
 import com.digis.PokedexApi.exception.ErrorCode;
 import com.digis.PokedexApi.mapper.PokemonMapper;
 import com.digis.PokedexApi.repository.PokemonRepository;
 import com.digis.PokedexApi.repository.UsuarioPokemonFavoritoRepository;
 import jakarta.transaction.Transactional;
-import java.util.Date;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -41,21 +39,30 @@ public class PokemonService extends BaseService {
     }
 
     @Transactional
-    public Result agregarFavoritoDesdeCache(int idUsuario, Pokemon pokemon) {
+    public Result agregarFavoritoDesdeCache(int idUsuario, int idPokemon) {
         try {
-            if (pokemonFavoritoRepository.existsByUsuarioPokemon_IdUsuarioPokemonAndPokemon_IdPokemon(idUsuario, idUsuario)) {
+            if (pokemonFavoritoRepository.existsByUsuarioPokemon_IdUsuarioPokemonAndPokemon_IdPokemon(idUsuario, idPokemon)) {
                 Result.error(ErrorCode.DUPLICATE, "Este pokemon ya es tu favorito");
             }
 
-            PokemonDTO pokemonDTO = pokeApiService.getFromCacheById(idUsuario);
+            PokemonDTO pokemonDTO = pokeApiService.getFromCacheById(idPokemon);
 
             if (pokemonDTO == null) {
                 return Result.error(ErrorCode.NOT_FOUND, "Pokemon no encontrado");
             }
-            
+
+            Pokemon pokemon = mapper.dtoToEntity(pokemonDTO);
+            pokemonRepository.save(pokemon);
+
+            UsuarioPokemonFavorito favorito = new UsuarioPokemonFavorito();
+            favorito.setPokemon(pokemon);
+
+            pokemonFavoritoRepository.save(favorito);
+            return Result.ok(favorito);
+
         } catch (Exception e) {
+            return Result.error(ErrorCode.INTERNAL_ERROR, e.getLocalizedMessage());
         }
-        return null;
     }
 
     @Transactional
