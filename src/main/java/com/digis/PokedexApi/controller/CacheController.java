@@ -17,6 +17,6 @@ public class CacheController {
     @DeleteMapping("/limpiar")
     public ResponseEntity<String> limpiarCache() {
         cacheManager.getCacheNames().forEach(name -> cacheManager.getCache(name).clear());
-        return ResponseEntity.ok("Cache listo correcctameente");
+        return ResponseEntity.ok("Cache limmpiado correcctameente");
     }
 }

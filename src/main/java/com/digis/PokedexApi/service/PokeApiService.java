@@ -4,6 +4,7 @@ import com.digis.PokedexApi.dto.PokemonApiResponseDTO;
 import com.digis.PokedexApi.dto.PokemonDTO;
 import com.digis.PokedexApi.dto.Result;
 import com.digis.PokedexApi.dto.pokemon.PokeListResponseDTO;
+import com.digis.PokedexApi.exception.ErrorCode;
 import com.digis.PokedexApi.mapper.PokemonMapper;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,44 +37,28 @@ public class PokeApiService extends BaseService {
 
     @Cacheable(value = "pokemon-name", key = "#name")
     public Result getAllByName(String name) {
-        Result result = new Result();
-
         try {
             PokemonDTO pokemon = fetchDetalle(URL_ID + name);
             if (pokemon == null) {
-                result.correct = false;
-                result.errorMessage = "No se encontro al pokemon con el nombre de " + name;
-                return result;
+                return Result.error(ErrorCode.NOT_FOUND, "No se encontró el pokemon con el nombre " + name);
             }
-            result.object = pokemon;
-            result.correct = true;
+            return Result.ok(pokemon);
         } catch (Exception e) {
-            result.correct = false;
-            result.errorMessage = e.getLocalizedMessage();
-            result.ex = e;
+            return Result.error(ErrorCode.INTERNAL_ERROR, e.getLocalizedMessage());
         }
-        return result;
     }
 
     @Cacheable(value = "pokemon-id", key = "#id")
     public Result getAllById(int id) {
-        Result result = new Result();
         try {
             PokemonDTO pokemon = fetchDetalle(URL_ID + id);
             if (pokemon == null) {
-                result.correct = false;
-                result.errorMessage = "No se encontro el pokemon";
-                return result;
+                return Result.error(ErrorCode.NOT_FOUND, "No se encontro el pokemon");
             }
-            result.object = pokemon;
-            result.correct = true;
-
+            return Result.ok(pokemon);
         } catch (Exception e) {
-            result.correct = false;
-            result.errorMessage = e.getLocalizedMessage();
-            result.ex = e;
+            return Result.error(ErrorCode.INTERNAL_ERROR, e.getLocalizedMessage(), e);
         }
-        return result;
     }
 
     @Cacheable(value = "pokemon-todos")

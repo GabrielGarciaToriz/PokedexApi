@@ -4,8 +4,6 @@ import com.digis.PokedexApi.dto.Result;
 import com.digis.PokedexApi.entity.UsuarioPokemon;
 import com.digis.PokedexApi.repository.UsuarioPokemonRepository;
 import jakarta.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,15 +14,15 @@ public class UsuarioPokemonService extends BaseService {
     private UsuarioPokemonRepository usuarioRepository;
 
     public Result getAll() {
-        return envolverRespuesta(() -> usuarioRepository.getAllWithDetails());
+        return ejecutarLista(() -> usuarioRepository.getAllWithDetails());
     }
 
     public Result getAllByid(int idUsuarioPokemon) {
-        return envolverRespuesta(() -> usuarioRepository.getAllByIdWithDetails(idUsuarioPokemon));
+        return ejecutarLista(() -> usuarioRepository.getAllByIdWithDetails(idUsuarioPokemon));
     }
 
     public Result getAllByUsername(String username) {
-        return envolverRespuesta(() -> usuarioRepository.getAllByUserNameWithDetails(username));
+        return ejecutarLista(() -> usuarioRepository.getAllByUserNameWithDetails(username));
     }
 
     public Result buscarUsuario(String nombre, String apellidoPaterno, String apellidoMaterno) {
@@ -33,42 +31,12 @@ public class UsuarioPokemonService extends BaseService {
 
     @Transactional
     public Result agregarUsuario(UsuarioPokemon usuario) {
-        Result result = new Result();
-        try {
-            usuarioRepository.save(usuario);
-            result.correct = true;
-        } catch (Exception e) {
-            manejoErrores(result, e);
-        }
-        return result;
+        return ejecutarVoid(() -> usuarioRepository.save(usuario));
     }
 
     @Transactional
     public Result eliminarUsuario(int idUsuario) {
-        Result result = new Result();
-        try {
-            usuarioRepository.deleteById(idUsuario);
-            result.correct = true;
-        } catch (Exception e) {
-            manejoErrores(result, e);
-        }
-        return result;
+        return ejecutarVoid(() -> usuarioRepository.deleteById(idUsuario));
     }
 
-    public void manejoErrores(Result result, Exception ex) {
-        result.correct = false;
-        result.ex = ex;
-        result.errorMessage = ex.getLocalizedMessage();
-    }
-
-    public Result envolverRespuesta(java.util.function.Supplier<List<UsuarioPokemon>> consulta) {
-        Result result = new Result();
-        try {
-            result.objects = new ArrayList<>(consulta.get());
-            result.correct = true;
-        } catch (Exception e) {
-            manejoErrores(result, e);
-        }
-        return result;
-    }
 }
