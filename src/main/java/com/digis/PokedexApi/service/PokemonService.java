@@ -32,9 +32,9 @@ public class PokemonService extends BaseService {
         return ejecutar(() -> pokemonFavoritoRepository.existsByUsuarioPokemon_IdUsuarioPokemonAndPokemon_IdPokemon(idUsuario, idPokemon));
     }
 
-    public Result buscarPokemon(String nombre, String tipo) {
+    public Result buscarPokemon(Integer id, String nombre, String tipoUno, String tipoDos) {
         return ejecutarLista(
-                () -> pokemonRepository.buscarPorFiltros(nombre, tipo)
+                () -> pokemonRepository.buscarPorFiltros(id, nombre, tipoDos, tipoDos)
         );
     }
 
