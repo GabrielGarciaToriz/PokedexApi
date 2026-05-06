@@ -14,6 +14,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.FetchType;
 
 @Entity
 @Table(name = "usuariopokemon")
@@ -28,6 +29,7 @@ public class UsuarioPokemon {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "idusuariopokemon")
     private Integer idUsuarioPokemon;
+    
     @Schema(description = "Nombre(s) del usuario", example = "Ash")
     @Column(name = "nombre")
     private String nombre;
@@ -54,10 +56,16 @@ public class UsuarioPokemon {
 
     @Schema(description = "Sexo: M o F", example = "M")
     @Column(name = "sexo")
-    private char sexo;
+    private Character sexo;
 
     @Schema(description = "Rol asignado al usuario")
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "idrol")
     public Rol rol;
+
+    @Column(name = "activo")
+    private Boolean activo;  // false hasta que confirme email
+
+    @Column(name = "correo")
+    private String correo;
 }
