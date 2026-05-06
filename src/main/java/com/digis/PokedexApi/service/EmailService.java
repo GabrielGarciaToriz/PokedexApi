@@ -54,7 +54,7 @@ public class EmailService {
 
         helper.setFrom(remitente);
         helper.setTo(destinatario);
-        helper.setSubject("🐾 Activa tu cuenta de PokedexApi");
+        helper.setSubject("Activa tu cuenta de PokedexApi");
         helper.setText(cuerpo, true); // true = es HTML
         
         mailSender.send(mensaje);

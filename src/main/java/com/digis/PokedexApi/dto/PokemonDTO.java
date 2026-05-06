@@ -1,6 +1,6 @@
 package com.digis.PokedexApi.dto;
 
-import com.digis.PokedexApi.dto.Pokemon.SpritesDTO;
+import com.digis.PokedexApi.dto.pokemon.SpritesDTO;
 import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;

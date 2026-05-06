@@ -3,7 +3,7 @@ package com.digis.PokedexApi;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest(classes = PokedexApiApplication.class)
+@SpringBootTest(classes = PokedexApiApplicationTests.class)
 class PokedexApiApplicationTests {
 
     @Test

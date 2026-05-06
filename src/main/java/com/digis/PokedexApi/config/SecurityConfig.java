@@ -1,8 +1,10 @@
 package com.digis.PokedexApi.config;
 
+import com.digis.PokedexApi.security.JwtAuthFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -17,27 +19,45 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     @Autowired
-    private JwtFilter jwtFilter;
+    private JwtAuthFilter jwtAuthFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(session ->
-                session.sessionCreationPolicy(SessionCreationPolicy.STATELESS) // sin sesión, todo por JWT
-            )
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                    "/api/auth/**",          // login, activar, reenviar
-                    "/api/usuario/agregar",  // registro público
-                    "/swagger-ui/**",
-                    "/swagger-ui.html",
-                    "/api-docs/**",
-                    "/v3/api-docs/**"
-                ).permitAll()
-                .anyRequest().authenticated()
-            )
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(sm -> sm
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+
+                        // ── Rutas públicas ──────────────────────────────────────
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/usuario/agregar").permitAll()
+                        // Swagger (si lo usas)
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**"
+                        ).permitAll()
+
+                        // ── MAESTRO_POKEMON: solo sus propios datos ─────────────
+                        // Ver su propio perfil
+                        .requestMatchers(HttpMethod.GET, "/api/usuario/username/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
+                        .requestMatchers(HttpMethod.GET, "/api/usuario/{id}").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
+                        // Sus favoritos
+                        .requestMatchers(HttpMethod.GET,  "/api/favoritos/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
+                        .requestMatchers(HttpMethod.POST, "/api/favoritos/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
+                        .requestMatchers(HttpMethod.DELETE, "/api/favoritos/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
+
+                        // ── LIDER_POKEMON: gestión completa de usuarios ─────────
+                        .requestMatchers(HttpMethod.GET,    "/api/usuario").hasRole("LIDER_POKEMON")
+                        .requestMatchers(HttpMethod.DELETE, "/api/usuario/**").hasRole("LIDER_POKEMON")
+
+                        // ── Pokemones: ambos pueden consultar ───────────────────
+                        .requestMatchers(HttpMethod.GET, "/api/pokemon/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
+
+                        // Cualquier otra ruta requiere autenticación
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
