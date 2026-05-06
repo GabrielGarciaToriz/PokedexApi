@@ -95,10 +95,9 @@ public class UsuarioPokemonService extends BaseService {
 
     public Result login(LoginRequestDTO request) {
         try {
-            // 1. Buscar usuario por username
+            // 1. Buscar usuario por correo
             UsuarioPokemon usuario = usuarioRepository
                     .findByCorreo(request.getCorreo())
-                    .stream().findFirst()
                     .orElseThrow(() -> new RuntimeException("Usuario o contraseña incorrectos"));
 
             // 2. Verificar contraseña
@@ -116,8 +115,7 @@ public class UsuarioPokemonService extends BaseService {
             String rol = usuario.getRol() != null ? usuario.getRol().getRol() : "USER";
             String token = jwtService.generarToken(usuario.getUserName(), rol);
 
-            return Result.ok(new LoginResponseDTO(token, usuario.getUserName(), usuario.getNombre(), rol));
-
+            return Result.ok(new LoginResponseDTO(token, usuario.getCorreo(), usuario.getNombre(), rol));
         } catch (RuntimeException e) {
             return Result.error(ErrorCode.NOT_FOUND, e.getMessage());
         } catch (Exception e) {

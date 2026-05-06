@@ -12,14 +12,14 @@ import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import jakarta.persistence.UniqueConstraint;
 import java.util.Date;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import io.swagger.v3.oas.annotations.media.Schema;
 
-@Getter
 @Setter
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
@@ -44,6 +44,6 @@ public class UsuarioPokemonFavorito {
     private Pokemon pokemon;
     @Schema(description = "Fecha en que se agregó el favorito", example = "2025-05-01")
     @Column(name = "fechaagregado")
-    @Temporal(TemporalType.DATE)
     private Date fechaAgregado;
+
 }

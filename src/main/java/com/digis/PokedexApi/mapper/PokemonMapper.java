@@ -2,19 +2,20 @@ package com.digis.PokedexApi.mapper;
 
 import com.digis.PokedexApi.dto.PokemonApiResponseDTO;
 import com.digis.PokedexApi.dto.PokemonDTO;
-import com.digis.PokedexApi.dto.Pokemon.MoveDTO;
-import com.digis.PokedexApi.dto.Pokemon.StatDTO;
-import com.digis.PokedexApi.dto.Pokemon.TypeDTO;
+import com.digis.PokedexApi.dto.pokemon.MoveDTO;
+import com.digis.PokedexApi.dto.pokemon.StatDTO;
+import com.digis.PokedexApi.dto.pokemon.TypeDTO;
 import com.digis.PokedexApi.entity.Pokemon;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Component;
 
 @Component
 public class PokemonMapper {
 
-    // ✅ PokemonApiResponseDTO (respuesta cruda PokeAPI) → PokemonDTO (caché)
     public PokemonDTO apiResponseToDTO(PokemonApiResponseDTO response) {
         if (response == null) {
             return null;
@@ -34,7 +35,6 @@ public class PokemonMapper {
         return dto;
     }
 
-    // ✅ PokemonDTO (caché) → Pokemon (entidad BD para persistir)
     public Pokemon dtoToEntity(PokemonDTO dto) {
         if (dto == null) {
             return null;
@@ -49,20 +49,19 @@ public class PokemonMapper {
         pokemon.setDefault(dto.isDefault());
         pokemon.setTipoUno(
                 dto.getTypes() != null && !dto.getTypes().isEmpty()
-                ? dto.getTypes().get(0) : null
+                        ? dto.getTypes().get(0) : null
         );
         pokemon.setTipoDos(
                 dto.getTypes() != null && dto.getTypes().size() > 1
-                ? dto.getTypes().get(1) : null
+                        ? dto.getTypes().get(1) : null
         );
         pokemon.setSpriteFront(
                 dto.getSprites() != null
-                ? dto.getSprites().getFrontDefault() : null
+                        ? dto.getSprites().getFrontDefault() : null
         );
         return pokemon;
     }
 
-    // ✅ Pokemon (entidad BD) → PokemonDTO (para devolver al frontend)
     public PokemonDTO entityToDTO(Pokemon pokemon) {
         if (pokemon == null) {
             return null;
