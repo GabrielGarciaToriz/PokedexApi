@@ -2,9 +2,9 @@ package com.digis.PokedexApi.mapper;
 
 import com.digis.PokedexApi.dto.PokemonApiResponseDTO;
 import com.digis.PokedexApi.dto.PokemonDTO;
-import com.digis.PokedexApi.dto.pokemon.MoveDTO;
-import com.digis.PokedexApi.dto.pokemon.StatDTO;
-import com.digis.PokedexApi.dto.pokemon.TypeDTO;
+import com.digis.PokedexApi.dto.Pokemon.MoveDTO;
+import com.digis.PokedexApi.dto.Pokemon.StatDTO;
+import com.digis.PokedexApi.dto.Pokemon.TypeDTO;
 import com.digis.PokedexApi.entity.Pokemon;
 import java.util.List;
 import java.util.Map;

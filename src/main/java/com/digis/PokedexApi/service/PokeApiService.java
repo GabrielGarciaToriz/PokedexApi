@@ -3,7 +3,7 @@ package com.digis.PokedexApi.service;
 import com.digis.PokedexApi.dto.PokemonApiResponseDTO;
 import com.digis.PokedexApi.dto.PokemonDTO;
 import com.digis.PokedexApi.dto.Result;
-import com.digis.PokedexApi.dto.pokemon.PokeListResponseDTO;
+import com.digis.PokedexApi.dto.Pokemon.PokeListResponseDTO;
 import com.digis.PokedexApi.exception.ErrorCode;
 import com.digis.PokedexApi.mapper.PokemonMapper;
 import java.util.ArrayList;

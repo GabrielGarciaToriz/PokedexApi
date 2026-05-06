@@ -1,9 +1,9 @@
 package com.digis.PokedexApi.dto;
 
-import com.digis.PokedexApi.dto.pokemon.MoveDTO;
-import com.digis.PokedexApi.dto.pokemon.SpritesDTO;
-import com.digis.PokedexApi.dto.pokemon.StatDTO;
-import com.digis.PokedexApi.dto.pokemon.TypeDTO;
+import com.digis.PokedexApi.dto.Pokemon.MoveDTO;
+import com.digis.PokedexApi.dto.Pokemon.SpritesDTO;
+import com.digis.PokedexApi.dto.Pokemon.StatDTO;
+import com.digis.PokedexApi.dto.Pokemon.TypeDTO;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import lombok.Getter;
