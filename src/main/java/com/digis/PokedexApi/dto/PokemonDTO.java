@@ -1,5 +1,6 @@
 package com.digis.PokedexApi.dto;
 
+import com.digis.PokedexApi.dto.pokemon.CriesDTO;
 import com.digis.PokedexApi.dto.pokemon.SpritesDTO;
 import java.util.List;
 import java.util.Map;
@@ -25,5 +26,6 @@ public class PokemonDTO {
     private List<String> moves;
     private Map<String, Integer> stats;
     private SpritesDTO sprites;
+    private CriesDTO cries;
 
 }

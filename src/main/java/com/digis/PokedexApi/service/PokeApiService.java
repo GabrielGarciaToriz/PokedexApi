@@ -18,6 +18,7 @@ import org.springframework.web.client.RestTemplate;
 import com.digis.PokedexApi.repository.PokemonApiRepository;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
+import org.springframework.web.client.RestClientException;
 
 @Service
 public class PokeApiService extends BaseService {
@@ -109,7 +110,7 @@ public class PokeApiService extends BaseService {
     private PokemonDTO fetchDetalle(String url) {
         try {
             return mapper.apiResponseToDTO(pokemonRestTemplate.getForObject(url, PokemonApiResponseDTO.class));
-        } catch (Exception e) {
+        } catch (RestClientException e) {
             return null;
         }
     }

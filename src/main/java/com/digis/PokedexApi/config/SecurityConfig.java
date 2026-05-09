@@ -24,39 +24,37 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.cors(Customizer.withDefaults())
+        http
+                .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-
-                        // ── Rutas públicas ──────────────────────────────────────
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/usuario/agregar").permitAll()
-                        // Swagger (si lo usas)
-                        .requestMatchers(
-                                "/swagger-ui/**",
-                                "/v3/api-docs/**"
-                        ).permitAll()
-
-                        // ── MAESTRO_POKEMON: solo sus propios datos ─────────────
-                        // Ver su propio perfil
-                        .requestMatchers(HttpMethod.GET, "/api/usuario/username/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
-                        .requestMatchers(HttpMethod.GET, "/api/usuario/{id}").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
-                        // Sus favoritos
-                        .requestMatchers(HttpMethod.GET,  "/api/favoritos/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
-                        .requestMatchers(HttpMethod.POST, "/api/favoritos/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
-                        .requestMatchers(HttpMethod.DELETE, "/api/favoritos/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
-
-                        // ── LIDER_POKEMON: gestión completa de usuarios ─────────
-                        .requestMatchers(HttpMethod.GET,    "/api/usuario").hasRole("LIDER_POKEMON")
-                        .requestMatchers(HttpMethod.DELETE, "/api/usuario/**").hasRole("LIDER_POKEMON")
-
-                        // ── Pokemones: ambos pueden consultar ───────────────────
-                        .requestMatchers(HttpMethod.GET, "/api/pokemon/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
-
-                        // Cualquier otra ruta requiere autenticación
-                        .anyRequest().authenticated()
+                // ── Rutas públicas ──────────────────────────────────────
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/usuario/agregar").permitAll()
+                .requestMatchers("/api/catalogo/**").permitAll()
+                // Swagger (si lo usas)
+                .requestMatchers(
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**"
+                ).permitAll()
+                // ── MAESTRO_POKEMON: solo sus propios datos ─────────────
+                // Ver su propio perfil
+                .requestMatchers(HttpMethod.GET, "/api/usuario/username/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
+                .requestMatchers(HttpMethod.GET, "/api/usuario/{id}").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
+                // Sus favoritos
+                .requestMatchers(HttpMethod.GET, "/api/favoritos/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
+                .requestMatchers(HttpMethod.POST, "/api/favoritos/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
+                .requestMatchers(HttpMethod.DELETE, "/api/favoritos/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
+                // ── LIDER_POKEMON: gestión completa de usuarios ─────────
+                .requestMatchers(HttpMethod.GET, "/api/usuario").hasRole("LIDER_POKEMON")
+                .requestMatchers(HttpMethod.DELETE, "/api/usuario/**").hasRole("LIDER_POKEMON")
+                // ── Pokemones: ambos pueden consultar ───────────────────
+                .requestMatchers(HttpMethod.GET, "/api/pokemon/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // Cualquier otra ruta requiere autenticación
+                .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
