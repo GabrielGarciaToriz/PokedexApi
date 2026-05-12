@@ -18,7 +18,6 @@ public class AuthRestController extends BaseController {
         return responder(usuarioPokemonService.login(request));
     }
 
-    // El link del correo apunta aquí
     @GetMapping("/activar")
     public ResponseEntity<Result> activarCuenta(@RequestParam String token) {
         return responder(usuarioPokemonService.activarCuenta(token));

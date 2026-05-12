@@ -1,5 +1,6 @@
 package com.digis.PokedexApi.dto;
 
+import com.digis.PokedexApi.dto.pokemon.CriesDTO;
 import com.digis.PokedexApi.dto.pokemon.MoveDTO;
 import com.digis.PokedexApi.dto.pokemon.SpritesDTO;
 import com.digis.PokedexApi.dto.pokemon.StatDTO;
@@ -12,6 +13,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PokemonApiResponseDTO {
+
     @JsonProperty("id")
     private int idPokemon;
     private String name;
@@ -25,4 +27,5 @@ public class PokemonApiResponseDTO {
     private List<TypeDTO> types;
     private List<MoveDTO> moves;
     private SpritesDTO sprites;
+    private CriesDTO cries;
 }

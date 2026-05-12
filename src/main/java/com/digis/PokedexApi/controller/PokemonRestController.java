@@ -36,7 +36,6 @@ public class PokemonRestController extends BaseController {
     public ResponseEntity<Result> getFavoritos(@Parameter(description = "ID del usuario", example = "1")
             @PathVariable("idUsuario") int idUsuario) {
         return responder(favoritoService.getFavoritoById(idUsuario));
-
     }
 
     @Operation(summary = "Verificar si un pokémon es favorito",

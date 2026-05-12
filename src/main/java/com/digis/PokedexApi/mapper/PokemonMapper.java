@@ -15,12 +15,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class PokemonMapper {
-
+    
     public PokemonDTO apiResponseToDTO(PokemonApiResponseDTO response) {
         if (response == null) {
             return null;
         }
-
+        
         PokemonDTO dto = new PokemonDTO();
         dto.setIdPokemon(response.getIdPokemon());
         dto.setName(response.getName());
@@ -32,14 +32,15 @@ public class PokemonMapper {
         dto.setMoves(mapearMoves(response.getMoves()));
         dto.setStats(mapearStats(response.getStats()));
         dto.setSprites(response.getSprites());
+        dto.setCries(response.getCries());
         return dto;
     }
-
+    
     public Pokemon dtoToEntity(PokemonDTO dto) {
         if (dto == null) {
             return null;
         }
-
+        
         Pokemon pokemon = new Pokemon();
         pokemon.setIdPokemon(dto.getIdPokemon());
         pokemon.setName(dto.getName());
@@ -49,24 +50,24 @@ public class PokemonMapper {
         pokemon.setDefault(dto.isDefault());
         pokemon.setTipoUno(
                 dto.getTypes() != null && !dto.getTypes().isEmpty()
-                        ? dto.getTypes().get(0) : null
+                ? dto.getTypes().get(0) : null
         );
         pokemon.setTipoDos(
                 dto.getTypes() != null && dto.getTypes().size() > 1
-                        ? dto.getTypes().get(1) : null
+                ? dto.getTypes().get(1) : null
         );
         pokemon.setSpriteFront(
                 dto.getSprites() != null
-                        ? dto.getSprites().getFrontDefault() : null
+                ? dto.getSprites().getFrontDefault() : null
         );
         return pokemon;
     }
-
+    
     public PokemonDTO entityToDTO(Pokemon pokemon) {
         if (pokemon == null) {
             return null;
         }
-
+        
         PokemonDTO dto = new PokemonDTO();
         dto.setIdPokemon(pokemon.getIdPokemon());
         dto.setName(pokemon.getName());
@@ -95,7 +96,7 @@ public class PokemonMapper {
                 .map(t -> t.getType().getName())
                 .collect(Collectors.toList());
     }
-
+    
     private Map<String, Integer> mapearStats(List<StatDTO> stats) {
         if (stats == null) {
             return null;
@@ -106,7 +107,7 @@ public class PokemonMapper {
                         StatDTO::getBaseStat
                 ));
     }
-
+    
     private List<String> mapearMoves(List<MoveDTO> moves) {
         if (moves == null) {
             return null;

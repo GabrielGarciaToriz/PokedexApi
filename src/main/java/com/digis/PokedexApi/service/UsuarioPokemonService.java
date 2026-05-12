@@ -95,27 +95,26 @@ public class UsuarioPokemonService extends BaseService {
 
     public Result login(LoginRequestDTO request) {
         try {
-            // 1. Buscar usuario por correo
             UsuarioPokemon usuario = usuarioRepository
                     .findByCorreo(request.getCorreo())
-                    .orElseThrow(() -> new RuntimeException("Usuario o contraseña incorrectos"));
+                    .orElseThrow(() -> new RuntimeException("Correo o contraseña incorrectos"));
 
-            // 2. Verificar contraseña
             if (!passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
-                return Result.error(ErrorCode.INVALID_INPUT, "Usuario o contraseña incorrectos");
+                return Result.error(ErrorCode.INVALID_INPUT, "Correo o contraseña incorrectos");
             }
 
-            // 3. Verificar que la cuenta esté activa
             if (!usuario.getActivo()) {
                 return Result.error(ErrorCode.INVALID_INPUT,
                         "Cuenta no activada. Revisa tu correo o solicita un nuevo enlace.");
             }
 
-            // 4. Generar JWT
             String rol = usuario.getRol() != null ? usuario.getRol().getRol() : "USER";
-            String token = jwtService.generarToken(usuario.getUserName(), rol);
+
+            // ✅ El token se genera con el CORREO como identificador
+            String token = jwtService.generarToken(usuario.getCorreo(), rol);
 
             return Result.ok(new LoginResponseDTO(token, usuario.getCorreo(), usuario.getNombre(), rol));
+
         } catch (RuntimeException e) {
             return Result.error(ErrorCode.NOT_FOUND, e.getMessage());
         } catch (Exception e) {
