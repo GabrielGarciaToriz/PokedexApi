@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class PokemonService extends BaseService {
-    
+
     @Autowired
     private UsuarioPokemonFavoritoRepository pokemonFavoritoRepository;
     @Autowired
@@ -23,48 +23,42 @@ public class PokemonService extends BaseService {
     private PokeApiService pokeApiService;
     @Autowired
     private PokemonMapper mapper;
-    
+
     public Result getFavoritoById(int idUsuario) {
         return ejecutarLista(() -> pokemonFavoritoRepository.getFavoritosByUsuario(idUsuario));
     }
-    
+
     public Result isFav(int idUsuario, int idPokemon) {
-        return ejecutar(() -> pokemonFavoritoRepository.existsByUsuarioPokemon_IdUsuarioPokemonAndPokemon_IdPokemon(idUsuario, idPokemon));
+        return ejecutar(() -> pokemonFavoritoRepository
+                .existsByUsuarioPokemon_IdUsuarioPokemonAndPokemon_IdPokemon(idUsuario, idPokemon));
     }
-    
-    public Result buscarPokemon(Integer id, String nombre, String tipoUno, String tipoDos) {
-        return ejecutarLista(
-                () -> pokemonRepository.buscarPorFiltros(id, nombre, tipoDos, tipoDos)
-        );
-    }
-    
+
     @Transactional
     public Result agregarFavoritoDesdeCache(int idUsuario, int idPokemon) {
         try {
-            if (pokemonFavoritoRepository.existsByUsuarioPokemon_IdUsuarioPokemonAndPokemon_IdPokemon(idUsuario, idPokemon)) {
-                return Result.error(ErrorCode.DUPLICATE, "Este pokemon ya es tu favorito");
+            if (pokemonFavoritoRepository
+                    .existsByUsuarioPokemon_IdUsuarioPokemonAndPokemon_IdPokemon(idUsuario, idPokemon)) {
+                return Result.error(ErrorCode.DUPLICATE, "Este pokémon ya es tu favorito");
             }
-            
-            PokemonDTO pokemonDTO = pokeApiService.getFromCacheById(idPokemon);
-            
-            if (pokemonDTO == null) {
-                return Result.error(ErrorCode.NOT_FOUND, "Pokemon no encontrado");
+
+            PokemonDTO dto = pokeApiService.getFromCacheById(idPokemon);
+            if (dto == null) {
+                return Result.error(ErrorCode.NOT_FOUND, "Pokémon no encontrado en caché");
             }
-            
-            Pokemon pokemon = mapper.dtoToEntity(pokemonDTO);
+
+            Pokemon pokemon = mapper.dtoToEntity(dto);
             pokemonRepository.save(pokemon);
-            
+
             UsuarioPokemonFavorito favorito = new UsuarioPokemonFavorito();
             favorito.setPokemon(pokemon);
-            
             pokemonFavoritoRepository.save(favorito);
+
             return Result.ok(favorito);
-            
         } catch (Exception e) {
             return Result.error(ErrorCode.INTERNAL_ERROR, e.getLocalizedMessage());
         }
     }
-    
+
     @Transactional
     public Result eliminarFavorito(int idUsuario, int idPokemon) {
         return ejecutar(() -> {

@@ -14,11 +14,8 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-import com.digis.PokedexApi.repository.PokemonApiRepository;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 public class PokeApiService extends BaseService {
@@ -30,44 +27,19 @@ public class PokeApiService extends BaseService {
     @Autowired
     private RestTemplate pokemonRestTemplate;
     @Autowired
-    private PokemonApiRepository pokemonRepository;
-    @Autowired
     private PokemonMapper mapper;
-    @Autowired
-    private CacheManager cacheManager;
 
-    @Cacheable(value = "pokemon-name", key = "#name")
-    public Result getAllByName(String name) {
-        try {
-            PokemonDTO pokemon = fetchDetalle(URL_ID + name);
-            if (pokemon == null) {
-                return Result.error(ErrorCode.NOT_FOUND, "No se encontró el pokemon con el nombre " + name);
-            }
-            return Result.ok(pokemon);
-        } catch (Exception e) {
-            return Result.error(ErrorCode.INTERNAL_ERROR, e.getLocalizedMessage());
-        }
-    }
-
-    @Cacheable(value = "pokemon-id", key = "#id")
-    public Result getAllById(int id) {
-        try {
-            PokemonDTO pokemon = fetchDetalle(URL_ID + id);
-            if (pokemon == null) {
-                return Result.error(ErrorCode.NOT_FOUND, "No se encontro el pokemon");
-            }
-            return Result.ok(pokemon);
-        } catch (Exception e) {
-            return Result.error(ErrorCode.INTERNAL_ERROR, e.getLocalizedMessage(), e);
-        }
-    }
-
+    // ─────────────────────────────────────────────────────────────
+    // ÚNICO punto de contacto con la PokéAPI externa
+    // ─────────────────────────────────────────────────────────────
     @Cacheable(value = "pokemon-todos")
     public Result getAll() {
         Result result = new Result();
         try {
-            PokeListResponseDTO pokemons = pokemonRestTemplate.getForObject(URL_BASE, PokeListResponseDTO.class);
-            int total = pokemons.getCount();
+            PokeListResponseDTO base = pokemonRestTemplate
+                    .getForObject(URL_BASE, PokeListResponseDTO.class);
+            int total = base.getCount();
+
             List<CompletableFuture<List<PokemonDTO>>> bloques = new ArrayList<>();
             for (int offset = 0; offset < total; offset += 100) {
                 final int off = offset;
@@ -90,51 +62,101 @@ public class PokeApiService extends BaseService {
         return result;
     }
 
-    @Cacheable(value = "pokemon-paginado", key = "#limit + '-' + #offset")
-    public Result getPaginado(int limit, int offset) {
-        return ejecutarLista(() -> {
-            PokeListResponseDTO respuesta = pokemonRestTemplate.getForObject(LIST_URL, PokeListResponseDTO.class, limit, offset);
-            if (respuesta == null || respuesta.getResults().isEmpty()) {
-                throw new RuntimeException("No se obtuvieron resultados");
-            }
-            return respuesta.getResults().stream().map(
-                    item -> CompletableFuture.supplyAsync(() -> fetchDetalle(item.getUrl()))
-            ).collect(Collectors.toList()).stream()
-                    .map(CompletableFuture::join)
-                    .filter(Objects::nonNull)
-                    .collect(Collectors.toList());
-        });
+    public Result getAllById(int id) {
+        List<PokemonDTO> todos = getTodos();
+        if (todos == null) {
+            return errorCarga();
+        }
 
+        return todos.stream()
+                .filter(p -> p.getIdPokemon() == id)
+                .findFirst()
+                .map(Result::ok)
+                .orElseGet(() -> Result.error(ErrorCode.NOT_FOUND,
+                "No se encontró el pokémon con id " + id));
+    }
+
+    public Result getAllByName(String name) {
+        List<PokemonDTO> todos = getTodos();
+        if (todos == null) {
+            return errorCarga();
+        }
+
+        return todos.stream()
+                .filter(p -> p.getName().equalsIgnoreCase(name))
+                .findFirst()
+                .map(Result::ok)
+                .orElseGet(() -> Result.error(ErrorCode.NOT_FOUND,
+                "No se encontró el pokémon con nombre " + name));
+    }
+
+    public Result getPaginado(int limit, int offset) {
+        List<PokemonDTO> todos = getTodos();
+        if (todos == null) {
+            return errorCarga();
+        }
+
+        List<PokemonDTO> pagina = todos.stream()
+                .skip(offset)
+                .limit(limit)
+                .collect(Collectors.toList());
+
+        return pagina.isEmpty()
+                ? Result.error(ErrorCode.NOT_FOUND, "Sin resultados para esa paginación")
+                : Result.okList(pagina);
+    }
+
+    public Result buscar(Integer id, String nombre, String tipo) {
+        List<PokemonDTO> todos = getTodos();
+        if (todos == null) {
+            return errorCarga();
+        }
+
+        List<PokemonDTO> filtrados = todos.stream()
+                .filter(p -> id == null || p.getIdPokemon() == id)
+                .filter(p -> nombre == null || p.getName().equalsIgnoreCase(nombre))
+                .filter(p -> tipo == null || (p.getTypes() != null
+                && p.getTypes().stream().anyMatch(t -> t.equalsIgnoreCase(tipo))))
+                .collect(Collectors.toList());
+
+        return filtrados.isEmpty()
+                ? Result.error(ErrorCode.NOT_FOUND, "No se encontraron pokémon con esos filtros")
+                : Result.okList(filtrados);
+    }
+
+    public PokemonDTO getFromCacheById(int id) {
+        Result result = getAllById(id);
+        return result.correct ? (PokemonDTO) result.object : null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<PokemonDTO> getTodos() {
+        Result r = this.getAll(); 
+        return r.correct ? (List<PokemonDTO>) r.objects : null;
+    }
+
+    private Result errorCarga() {
+        return Result.error(ErrorCode.INTERNAL_ERROR, "Error al obtener la lista de pokémon");
     }
 
     private PokemonDTO fetchDetalle(String url) {
         try {
-            return mapper.apiResponseToDTO(pokemonRestTemplate.getForObject(url, PokemonApiResponseDTO.class));
+            return mapper.apiResponseToDTO(
+                    pokemonRestTemplate.getForObject(url, PokemonApiResponseDTO.class));
         } catch (RestClientException e) {
             return null;
         }
     }
 
     private List<PokemonDTO> fetchBloque(int limit, int offset) {
-        PokeListResponseDTO lista_pokemon = pokemonRestTemplate.getForObject(LIST_URL, PokeListResponseDTO.class, limit, offset);
-        if (lista_pokemon == null) {
+        PokeListResponseDTO lista = pokemonRestTemplate
+                .getForObject(LIST_URL, PokeListResponseDTO.class, limit, offset);
+        if (lista == null) {
             return List.of();
         }
-        return lista_pokemon.getResults().stream().map(item -> fetchDetalle(item.getUrl())).filter(Objects::nonNull).collect(Collectors.toList());
-    }
-
-    public PokemonDTO getFromCacheById(int id) {
-        Cache cache = cacheManager.getCache("pokemon-id");
-        if (cache != null) {
-            Cache.ValueWrapper cached = cache.get(id);
-            if (cached != null) {
-                Result result = (Result) cached.get();
-                if (result != null && result.object != null) {
-                    return (PokemonDTO) result.object;
-                }
-            }
-        }
-        Result result = getAllById(id);  // @Cacheable lo guarda solo
-        return result.correct ? (PokemonDTO) result.object : null;
+        return lista.getResults().stream()
+                .map(item -> fetchDetalle(item.getUrl()))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
     }
 }

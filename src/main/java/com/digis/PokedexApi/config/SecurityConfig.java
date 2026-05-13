@@ -34,6 +34,12 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/usuario/agregar").permitAll()
                 .requestMatchers("/api/catalogo/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/usuario/{id}").permitAll()
+                .requestMatchers(
+                        "/api/auth/password/forgot",
+                        "/api/auth/password/validate",
+                        "/api/auth/password/reset"
+                ).permitAll()
                 // Swagger (si lo usas)
                 .requestMatchers(
                         "/swagger-ui/**",
@@ -42,7 +48,7 @@ public class SecurityConfig {
                 // ── MAESTRO_POKEMON: solo sus propios datos ─────────────
                 // Ver su propio perfil
                 .requestMatchers(HttpMethod.GET, "/api/usuario/username/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
-                .requestMatchers(HttpMethod.GET, "/api/usuario/{id}").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
+                //                .requestMatchers(HttpMethod.GET, "/api/usuario/{id}").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
                 // Sus favoritos
                 .requestMatchers(HttpMethod.GET, "/api/favoritos/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
                 .requestMatchers(HttpMethod.POST, "/api/favoritos/**").hasAnyRole("MAESTRO_POKEMON", "LIDER_POKEMON")
