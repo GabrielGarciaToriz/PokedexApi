@@ -55,6 +55,11 @@ public interface UsuarioPokemonRepository extends JpaRepository<UsuarioPokemon, 
             @Param("apellidoMaterno") String apellidoMaterno
     );
 
+    @Query(
+            """
+    SELECT DISTINCT u FROM UsuarioPokemon u
+    WHERE  u.correo = :correo
+    """)
     Optional<UsuarioPokemon> findByCorreo(String correo);
 
 }

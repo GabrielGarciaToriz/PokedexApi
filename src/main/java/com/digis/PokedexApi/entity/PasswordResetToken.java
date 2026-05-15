@@ -21,12 +21,12 @@ public class PasswordResetToken {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "IDPASSWORDTOKEN")
+    @Column(name = "idpasswordtoken")
     private Long idPasswordToken;
     @Column(nullable = false, unique = true)
     private String token;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "idUsuarioPokemon", nullable = false)
+    @JoinColumn(name = "idusuariopokemon", nullable = false)
     private UsuarioPokemon usuario;
     @Column(nullable = false, name = "expiration")
     private LocalDateTime expiration;
