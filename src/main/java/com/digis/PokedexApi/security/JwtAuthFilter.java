@@ -27,7 +27,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             "/api/auth/**",
             "/api/usuario/agregar",
             "/swagger-ui/**",
-            "/v3/api-docs/**"
+            "/v3/api-docs/**",
+            "/api/auth/password/forgot",
+            "/api/auth/password/validate",
+            "/api/auth/password/reset"
     );
 
     @Override
@@ -40,8 +43,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
+            HttpServletResponse response,
+            FilterChain filterChain)
             throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
@@ -59,7 +62,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
 
         String correo = jwtService.extraerCorreo(token);
-        String rol    = jwtService.extraerRol(token);
+        String rol = jwtService.extraerRol(token);
 
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
                 correo,
