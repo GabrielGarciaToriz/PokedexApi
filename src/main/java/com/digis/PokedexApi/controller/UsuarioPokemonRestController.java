@@ -10,8 +10,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("api/usuario")
@@ -27,9 +29,17 @@ public class UsuarioPokemonRestController extends BaseController {
         @ApiResponse(responseCode = "200", description = "Lista de usuarios obtenida exitosamente"),
         @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
+
     @GetMapping()
     public ResponseEntity<Result> getAll() {
         return responder(usuarioPokemonService.getAll());
+    }
+
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter transmitirEnTiempoReal(
+            @Parameter(description = "Correo del usuario que espera activación", example = "entrenador@poke.com", required = true)
+            @RequestParam String email) {
+        return usuarioPokemonService.suscribirCliente(email);
     }
 
     @Operation(summary = "Obtener usuario por ID")

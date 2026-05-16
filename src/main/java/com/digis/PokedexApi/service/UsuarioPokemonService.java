@@ -9,12 +9,16 @@ import com.digis.PokedexApi.exception.ErrorCode;
 import com.digis.PokedexApi.repository.TokenActivacionRepository;
 import com.digis.PokedexApi.repository.UsuarioPokemonRepository;
 import jakarta.transaction.Transactional;
+import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @Service
 public class UsuarioPokemonService extends BaseService {
@@ -32,8 +36,24 @@ public class UsuarioPokemonService extends BaseService {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private JwtService jwtService;
+    
+   // Mapa en memoria para mantener las conexiones SSE activas por correo 
+    private final Map<String, SseEmitter> emitters = new ConcurrentHashMap<>();
 
-    // ── Métodos existentes (sin cambios) ──────────────────
+    // Permite al controlador suscribir el navegador del usuario 
+    public SseEmitter suscribirCliente(String email) {
+        SseEmitter emitter = new SseEmitter(180_000L); // 3 minutos de tiempo de espera (Timeout)
+        
+        this.emitters.put(email, emitter);
+
+        // Limpieza de memoria si el cliente cierra la pestaña o expira el tiempo
+        emitter.onCompletion(() -> this.emitters.remove(email));
+        emitter.onTimeout(() -> this.emitters.remove(email));
+        
+        return emitter;
+    }
+
+   
     public Result getAll() {
         return ejecutarLista(() -> usuarioRepository.getAllWithDetails());
     }
@@ -148,6 +168,32 @@ public class UsuarioPokemonService extends BaseService {
             // 5. Marcar token como usado
             tokenActivacion.setUsado(true);
             tokenRepository.save(tokenActivacion);
+            
+            SseEmitter emitter = emitters.get(usuario.getCorreo());
+            if (emitter != null) {
+                try {
+                    // Generamos el JWT de inmediato para que el frontend inicie sesión directo
+                    String rol = usuario.getRol() != null ? usuario.getRol().getRol() : "USER";
+                    String jwtToken = jwtService.generarToken(usuario.getCorreo(), rol);
+
+                    // Formateamos un JSON string de forma manual o con Jackson para enviar al cliente
+                    String jsonPayload = String.format(
+                        "{\"token\":\"%s\",\"correo\":\"%s\",\"nombre\":\"%s\",\"rol\":\"%s\"}",
+                        jwtToken, usuario.getCorreo(), usuario.getNombre(), rol
+                    );
+
+                    // Disparamos el evento hacia el cliente conectado
+                    emitter.send(SseEmitter.event()
+                            .name("CUENTA_ACTIVADA")
+                            .data(jsonPayload));
+                    
+                    // Finalizamos la conexión por haber cumplido exitosamente su propósito
+                    emitter.complete();
+                } catch (IOException e) {
+                    // Si el cliente se desconectó abruptamente, lo removemos del mapa
+                    emitters.remove(usuario.getCorreo());
+                }
+            }
 
             return Result.ok("¡Cuenta activada exitosamente! Ya puedes iniciar sesión.");
 
